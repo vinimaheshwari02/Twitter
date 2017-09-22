@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-route.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/1.0.3/angular-ui-router.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.0-rc.0/angular-cookies.min.js"></script>
+</head>
+<body ng-app="myApp">
+
+<ul style="list-style: none;margin-left:0px">
+    <li>
+        <img ui-sref src="https://www.technobezz.com/files/uploads/2016/12/twitter.png" style="width:40px;height:25px;">&nbsp;&nbsp;
+        <a ui-sref="login" style="text-decoration:none;font-size:38px;">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
+        <a ui-sref="signup" style="text-decoration:none;font-size:38px">Signup</a>
+        <a ui-sref="view"></a>
+
+    </li>
+</ul>
+
+<div ui-view></div>
+
+
+
+
+<script>
+var routerApp = angular.module('myApp', ['ngCookies','ui.router']);
+
+routerApp.config(function($stateProvider, $urlRouterProvider) {
+
+    $urlRouterProvider.otherwise('/');
+
+    $stateProvider
+
+        // HOME STATES AND NESTED VIEWS ========================================
+        .state('login', {
+            url: '/login',
+
+            templateUrl: 'login.html',
+            controller:'navigation'
+
+        })
+
+        // ABOUT PAGE AND MULTIPLE NAMED VIEWS =================================
+        .state('signup', {
+        url: '/signup',
+
+         templateUrl: 'signup.html',
+            controller:'sign'
+
+
+        })
+
+        .state('view', {
+        url: '/view',
+        views: {
+
+            // the main template will be placed here (relatively named)
+            '': { templateUrl: 'view.html',
+             controller:'view'}
+
+
+        }
+
+    });
+
+});
+routerApp.controller('navigation', function($cookieStore,$rootScope, $scope, $http, $location,$state) {
+var authenticate = function(credentials, callback) {
+
+    var headers = credentials ? {authorization : "Basic "
+        + btoa(credentials.userName + ":" + credentials.password)
+    } : {};
+
+    $http.get('/user', {headers : headers}).then(function mySuccess(response) {
+      if (response.data.name) {
+    $rootScope.id=response.data.principal.id;
+
+    $cookieStore.put('id', $rootScope.id);
+    console.log($cookieStore.get('id'));
+        $rootScope.authenticated = true;
+
+
+      } else {
+        $rootScope.authenticated = false;
+      }
+      callback && callback();
+    },function myError(response) {
+      $rootScope.authenticated = false;
+      callback && callback();
+    });
+
+  }
+
+  authenticate();
+  $scope.credentials = {};
+  $scope.login = function() {
+      authenticate($scope.credentials, function() {
+        if ($rootScope.authenticated) {
+        $rootScope.userName=$scope.credentials.userName;
+        $cookieStore.put('name',$rootScope.userName);
+        console.log($cookieStore.get('name'));
+
+         $state.go('view')
+          $scope.error = false;
+        } else {
+          $state.go('login');
+          $scope.error = true;
+        }
+      });
+  };
+
+});
+routerApp.controller('sign',function($scope,$rootScope,$http,$state){
+
+      $scope.items = [{
+
+              "id": 1,
+              "interest" : "type1"
+
+      }, {
+
+              "id": 2,
+              "interest" : "type2"
+
+      }, {
+
+              "id": 3,
+              "interest" : "type3"
+
+      }];
+        $scope.selection=[];
+
+  // toggle selection for a given employee by name
+  $scope.toggleSelection = function toggleSelection(i) {
+     var idx = $scope.selection.indexOf(i);
+
+     // is currently selected
+     if (idx > -1) {
+       $scope.selection.splice(idx, 1);
+     }
+
+     // is newly selected
+     else {
+       $scope.selection.push(i);
+
+
+
+     }
+
+   };
+  $scope.signup=function(){
+$scope.user.interests=$scope.selection;
+
+
+var req={
+  "method":'POST',
+  "url":'http://localhost:8080/addUser',
+  "headers":{'Content-Type':'application/json'},
+  "data":$scope.user
+};
+
+  $http(req).then(function(data){
+    console.log(data);
+    $scope.user={};
+    $scope.message="Registered now you can login";
+    $state.go('login')
+    $scope.myForm.$setUntouched();
+    $scope.myForm.$setPristine();
+  },function(error){
+  $scope.message="Username and email should be unique";
+    console.log(error)
+  });
+  }
+});
+routerApp.controller('view', function($cookieStore,$scope,$rootScope,$http,$location,$state) {
+
+  $scope.followerstweet=[];
+  var u;
+$scope.name=$cookieStore.get('name');
+$scope.showtwtofitself=function(){
+  window.location.reload();
+}
+$scope.search=function(){
+$scope.writetweet=function(){
+  return false;
+}
+  $scope.hidetry = function () {
+    return false;
+  }
+  $scope.show=function(){
+    return true;
+  }
+  $scope.hiding=function(){
+  return true;
+  }
+  $scope.disablefollow="true";
+$scope.unf=function(){
+return true;
+}
+
+var s=$scope.searching;
+if(s.startsWith('#')){
+
+$scope.hidetry = function () {
+return true;
+}
+$scope.hash = function () {
+return false;
+}
+$scope.searchbyname = function () {
+return true;
+}
+$scope.show=function(){
+return true;
+}
+$scope.tweetshow=function(){
+return false;
+}
+
+var req={
+    method : "GET",
+    url : "http://localhost:8080/findByTag",
+    params:{"name":s}
+
+};
+
+  $http(req).then(function mySuccess(response){
+        $scope.sear=response.data;
+        $scope.profileedit=function(){
+
+          return false;
+        }
+
+  },function(error){
+    console.log(error)
+  });
+  }
+else {
+
+$scope.hash = function () {
+return true;
+}
+$scope.searchbyname = function () {
+return false;
+}
+if(($scope.loginFollowers.indexOf(s)>=0) || (s===$cookieStore.get('name'))){
+
+  $scope.already=function(){
+    return false;
+  }
+}
+else{
+  $scope.already=function(){
+    return true;
+  }
+}
+var req={
+  method : "GET",
+  url : "http://localhost:8080/findByName",
+  params:{"name":s}
+
+};
+
+$http(req).then(function mySuccess(response){
+
+
+    $scope.userlist=response.data;
+    if(response.data!=""){
+    $scope.hidetry = function () {
+      return false;
+    }
+    $http({
+        method : "GET",
+        url : "http://localhost:8080/findTweet",
+        params:{"id":$scope.userlist.id}
+
+    }).then(function(response){
+          $scope.tweets=response.data;
+          $scope.hiding=function(){
+            return true;
+          }
+
+    },function(error){
+
+        });
+  }
+  else{
+    $scope.hidetry = function () {
+      return true;
+    }
+    window.location.reload();
+  }
+
+
+},function(error){
+
+        console.log(error)
+});
+
+var req={
+    "method":'POST',
+    "url":'http://localhost:8080/findFollowers',
+    params:{"name":s}
+
+  };
+
+    $http(req).then(function(response){
+      $scope.followingat=response.data;
+
+},function(error){
+
+    });
+
+    var req={
+        "method":'POST',
+        "url":'http://localhost:8080/findFollowing1',
+        params:{"name":s}
+
+      };
+
+        $http(req).then(function(response){
+          $scope.following=response.data;
+
+    },function(error){
+
+        });
+
+}
+
+
+}
+$scope.addlike=function(l){
+  console.log(l);
+
+
+  var req={
+    "method":'POST',
+    "url":'http://localhost:8080/addLikeTweet',
+    "params":{"id":l}
+  };
+
+    $http(req).then(function(data){
+      console.log(data);
+
+
+    },function(error){
+      console.log(error)
+    });
+
+}
+$scope.adddislike=function(l){
+  console.log(l);
+
+
+  var req={
+    "method":'POST',
+    "url":'http://localhost:8080/addDisLikeTweet',
+    "params":{"id":l}
+  };
+
+    $http(req).then(function(data){
+      console.log(data);
+
+
+    },function(error){
+      console.log(error)
+    });
+
+}
+$scope.delete=function(e){
+  $http({
+      method : "GET",
+      url : "http://localhost:8080/deleteTweet",
+      params:{"id":e}
+
+  }).then(function mySuccess(response) {
+
+      window.location.reload();
+
+}, function myError(response) {
+      $scope.names = response.statusText;
+  });
+}
+
+<!--add tweet from input-->
+
+$scope.tw=function(){
+console.log(u)
+$scope.tweet.lid=800;
+$scope.tweet.user={};
+$scope.tweet.user.id=u.id;
+$scope.tweet.user.email=u.email;
+$scope.tweet.user.first_name=u.first_name;
+$scope.tweet.user.interests=u.interests;
+$scope.tweet.user.password=u.password;
+$scope.tweet.user.userName=u.userName;
+$scope.tweet.user.last_name=u.userName;
+console.log($scope.tweet);
+var req={
+  "method":'POST',
+  "url":'http://localhost:8080/addTweet',
+  "headers":{'Content-Type':'application/json'},
+  "data":$scope.tweet
+};
+
+  $http(req).then(function(data){
+    console.log(data);
+    window.location.reload();
+
+  },function(error){
+    console.log(error)
+  });
+  }
+
+  <!--show tweet of following by clicking on it-->
+  $scope.showtwtoffoll=function(o){
+    $scope.hiding = function () {
+      return true;
+  }
+  $scope.show=function(){
+    return true;
+  }
+    $http({
+        method : "GET",
+        url : "http://localhost:8080/findTweet",
+        params:{"id":o}
+
+    }).then(function mySuccess(response) {
+
+        $scope.tweets = response.data;
+
+  }, function myError(response) {
+        $scope.names = response.statusText;
+    });
+  }
+
+
+
+$scope.writetweet=function(){
+  return true
+}
+$scope.tweetshow=function(){
+  return true;
+}
+<!--followers-->
+var req={
+    "method":'POST',
+    "url":'http://localhost:8080/findFollowers',
+    params:{"name":$cookieStore.get('name')}
+
+  };
+
+    $http(req).then(function(response){
+      $scope.followingat=response.data;
+
+},function(error){
+
+    });
+
+
+
+<!--following-->
+$scope.followersname=[];
+var req={
+    "method":'POST',
+    "url":'http://localhost:8080/findFollowing1',
+    params:{"name":$cookieStore.get('name')}
+
+  };
+
+    $http(req).then(function(response){
+      $scope.following=response.data;
+      for(x in response.data){
+        $scope.followersname.push(response.data[x][1]);
+      }
+      $scope.loginFollowers=$scope.followersname;
+      console.log($scope.followersname);
+
+},function(error){
+
+    });
+
+<!-- get user detail-->
+$http({
+method : "GET",
+url : "http://localhost:8080/findUser",
+params:{"name":$cookieStore.get('name')}
+
+}).then(function mySuccess(response) {
+$scope.userinterest=response.data.interests;
+u=response.data;
+},function(error){
+
+    });
+    <!-- find tweet of user-->
+$http({
+    method : "GET",
+    url : "http://localhost:8080/findTweet",
+    params:{"id":$cookieStore.get('id')}
+
+}).then(function(response){
+      $scope.tweets=response.data;
+
+},function(error){
+
+    });
+    <!--find tweet of following-->
+
+    var tweetFollowing,it=0;
+    var req={
+        "method":'POST',
+        "url":'http://localhost:8080/findFollowing1',
+        params:{"name":$cookieStore.get('name')}
+
+      };
+
+        $http(req).then(function(response){
+        var r=[];
+        tweetFollowing=response.data;
+        for (it in tweetFollowing){
+          $http({
+              method : "GET",
+              url : "http://localhost:8080/findTweet",
+              params:{"id":tweetFollowing[it][0]}
+
+          }).then(function mySuccess(result){
+          if(result.data.length!=0){
+            r.push(result.data);
+            }
+
+          });
+          it++;
+        }
+$scope.followerstweet=r;
+    },function(error){
+
+        });
+
+    <!--retweet-->
+
+
+    $scope.retweet=function(p){
+      console.log(p.tweeter);
+      $scope.tweetf={};
+
+      $http({
+        method : "GET",
+        url : "http://localhost:8080/findUser",
+        params:{"name":$cookieStore.get('name')}
+
+      }).then(function mySuccess(response) {
+        $scope.tweetf.user={};
+        $scope.tweetf.user.id=u.id;
+        $scope.tweetf.user.email=u.email;
+        $scope.tweetf.user.first_name=u.first_name;
+        $scope.tweetf.user.interests=u.interests;
+        $scope.tweetf.user.password=u.password;
+        $scope.tweetf.user.userName=u.userName;
+        $scope.tweetf.user.last_name=u.userName;
+        $scope.tweetf.tweeter=p.tweeter;
+     var req={
+       "method":'POST',
+       "url":'http://localhost:8080/addTweet',
+       "headers":{'Content-Type':'application/json'},
+       "data":$scope.tweetf
+     };
+
+       $http(req).then(function(data){
+         console.log(data);
+         window.location.reload();
+
+       },function(error){
+         console.log(error)
+       });
+
+
+
+
+      }, function myError(response) {
+
+      });
+
+    }
+
+  <!-- suggestion click-->
+
+  $scope.openSuggestion=function(){
+  $scope.suggestion=[];
+
+
+
+  $http({
+    method : "GET",
+    url : "http://localhost:8080/findUserotherthan",
+    params:{"name":$cookieStore.get('name')}
+
+  }).then(function mySuccess(response) {
+  var usersid=[];
+  for( i in $scope.userinterest){
+    usersid.push($scope.userinterest[i].id);
+  }
+  var l=usersid.length;
+
+  usersid.sort();
+  console.log(response.data)
+  for(i in response.data){
+    console.log(i);
+    var adding={};
+    var f_int=[];
+    var count=0;
+    var f=response.data[i].interests;
+    for(a in response.data[i].interests ){
+      f_int.push(response.data[i].interests[a].id)
+    }
+    f_int.sort();
+    var m=f_int.length;
+    for(w=0;w!=m;w++){
+      if(usersid.indexOf(f_int[w])>=0){
+        count++;
+      }
+    }
+  console.log($scope.followersname);
+
+  if(count>=0){
+    adding.name=response.data[i].userName;
+    adding.count=count;
+    if($scope.followersname.indexOf(adding.name)< 0){
+      $scope.suggestion.push(adding);
+    }
+    console.log(adding);
+  }
+
+
+  }
+  }, function myError(response) {
+  console.log(response);
+  });
+  }
+
+
+<!--add suggested user-->
+$scope.addthem=function(nam){
+
+  $http({
+    method : "GET",
+    url : "http://localhost:8080/findUser",
+    params:{"name":$cookieStore.get('name')}
+
+  }).then(function mySuccess(response) {
+    console.log(response);
+  $scope.useradd={};
+  $scope.useradd.mainid=response.data.id;
+  $http({
+    method : "GET",
+    url : "http://localhost:8080/findUser",
+    params:{"name":nam}
+
+  }).then(function mySuccess(result) {
+    console.log(result.data.id);
+$scope.useradd.newid=result.data.id;
+  console.log($scope.useradd);
+  var req={
+    "method":'POST',
+    "url":'http://localhost:8080/updUser',
+    "headers":{'Content-Type':'application/json'},
+    "data":$scope.useradd
+  };
+
+    $http(req).then(function(data){
+      console.log(data);
+
+    },function(error){
+      window.location.reload();
+    });
+
+
+}, function myError(response) {
+
+  });
+
+}, function myError(response) {
+
+  });
+
+
+}
+
+<!--edit profile-->
+$scope.editprofile=function(){
+  $scope.profileedit=function(){
+
+    return true;
+  }
+  $scope.tweetshow=function(){
+
+    return false;
+  }
+  $scope.show=function(){
+    return true;
+  }
+  $scope.writetweet=function(){
+    return false;
+  }
+  $scope.searchbyname=function(){
+    return true;
+  }
+$scope.items = [{
+
+        "id": 1,
+        "interest" : "type1"
+
+}, {
+
+        "id": 2,
+        "interest" : "type2"
+
+}, {
+
+        "id": 3,
+        "interest" : "type3"
+
+}];
+
+
+$scope.selection=[];
+
+
+  // toggle selection for a given employee by name
+  $scope.toggleSelection = function toggleSelection(i) {
+     var idx = $scope.selection.indexOf(i);
+
+     // is currently selected
+     if (idx > -1) {
+       $scope.selection.splice(idx, 1);
+     }
+
+     // is newly selected
+     else {
+       $scope.selection.push(i);
+
+
+
+     }
+
+   };
+
+$http({
+  method : "GET",
+  url : "http://localhost:8080/findUser",
+  params:{"name":$cookieStore.get('name')}
+
+}).then(function mySuccess(response) {
+$scope.user={},
+$scope.user.id=response.data.id;
+$scope.user.userName=response.data.userName;
+$scope.user.email=response.data.email;
+$scope.user.first_name=response.data.first_name;
+$scope.user.last_name=response.data.last_name;
+$scope.user.password=response.data.password;
+$scope.user.interests=response.data.interests;
+
+
+
+
+
+}, function myError(response) {
+
+});
+
+$scope.edit=function(){
+$scope.user.interests=$scope.selection;
+var req={
+  "method":'POST',
+  "url":'http://localhost:8080/updateUser',
+  "headers":{'Content-Type':'application/json'},
+  "data":$scope.user
+};
+
+  $http(req).then(function(data){
+    console.log(data);
+window.location.reload();
+  },function(error){
+    console.log(error)
+  });
+}
+}
+<!--logout-->
+$scope.logout = function() {
+var req={
+    "method":'POST',
+    "url":'http://localhost:8080/logout',
+    "headers":{'Content-Type':'application/json'},
+
+  };
+
+    $http(req).then(function(data){
+      $rootScope.authenticated = false;
+    $state.go('login');
+    window.location.reload();
+    },function(error){
+      $rootScope.authenticated = false;
+    });
+
+}
+<!--unfollow-->
+$scope.unfollow=function(ifF){
+
+
+  $scope.unfollowthem={};
+  $scope.unfollowthem.mainid=$cookieStore.get('id')
+  $scope.unfollowthem.newid=ifF;
+
+
+  var req={
+    "method":'POST',
+    "url":'http://localhost:8080/unfollow',
+    "headers":{'Content-Type':'application/json'},
+    "data":$scope.unfollowthem
+  };
+
+    $http(req).then(function(data){
+      console.log(data);
+      window.location.reload();
+
+    },function(error){
+      window.location.reload();
+    });
+
+
+
+
+}
+$scope.addSearchUser=function(q){
+  $scope.useradd={};
+  $scope.useradd.mainid=$cookieStore.get('id');
+  $scope.useradd.newid=q;
+  var req={
+    "method":'POST',
+    "url":'http://localhost:8080/updUser',
+    "headers":{'Content-Type':'application/json'},
+    "data":$scope.useradd
+  };
+
+    $http(req).then(function(data){
+      console.log(data);
+
+    },function(error){
+      window.location.reload();
+    });
+}
+
+});
+
+
+</script>
+
+</body>
+</html>

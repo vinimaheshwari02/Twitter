@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+
+</head>
+<body>
+<div ng-app="myApp" ng-controller="sign" ng-cloak>
+    <form name="myForm" ng-submit="signup()">
+        <p>UserName:<br>
+            <input name="userName" ng-model="user.userName" ng-pattern="/^[A-Za-z ]{2,100}$/" required>
+            <span ng-show="myForm.userName.$touched && myForm.userName.$invalid">Name incorrect</span>
+        </p>
+        <p>Email:<br>
+            <input name="email" ng-model="user.email" ng-pattern="/^[a-zA-Z]+([a-zA-Z0-9]|[_]|[.])*@[a-zA-Z][a-zA-Z0-9]*.[a-zA-Z]+/" required>
+            <span ng-show="myForm.email.$touched && myForm.email.$invalid">Email incorrect</span>
+        </p>
+        <p>FirstName:<br>
+            <input name="first_name" ng-model="user.first_name" ng-pattern="/^[A-Za-z ]{2,100}$/" required>
+            <span ng-show="myForm.first_name.$touched && myForm.first_name.$invalid">First Name incorrect</span>
+        </p>
+        <p>LastName:<br>
+            <input name="last_name" ng-model="user.last_name" ng-pattern="/^[A-Za-z ]{2,100}$/" required>
+            <span ng-show="myForm.last_name.$touched && myForm.last_name.$invalid">Last Name incorrect</span>
+        </p>
+        <p>Password:<br>
+            <input name="password" type="password" ng-model="user.password" ng-pattern="/^(?=.*\d)(?=.*[a-zA-Z]).{4,8}$/" required>
+            <span ng-show="myForm.password.$touched && myForm.password.$invalid">password incorrect</span>
+        </p>
+        <p>Interest:<br>
+            <div ng-repeat="i in items" ng-model="user.interests">
+        <div class="action-checkbox">
+            <input id="{{i.interest}}" type="checkbox" value="{{i.interest}}" ng-checked="selection.indexof(i)>-1" ng-click="toggleSelection(i) "/>
+            <label for="{{i.interest}}"></label>
+            {{i.interest}}
+        </div>
+    </div>
+        <span style="color:white;" class="selected-item">Selected Items:</span>
+ <div ng-repeat="name in selection" class="selected-item" ng-model="user.interests">
+
+     {{user.interests.interest}}
+ </div>
+
+         <!--   <select ng-model="user.interests"  multiple ng-options="i.interest for i in items">
+
+            </select>-->
+        </p>
+
+        <p>
+            <button type="submit">Submit</button>
+        </p>
+        <p>
+            {{message}}
+        </p>
+
+
+    </form>
+</div>
+
+
+
+</body>
+</html>
